@@ -1,9 +1,9 @@
 import * as fs from 'fs-extra';
+import * as fsreal from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { mocked } from 'ts-jest/utils';
-
-import { extractFileNames } from '../helper';
+import { extractFileNames, flatDep } from '../helper';
 
 jest.mock('fs-extra');
 
@@ -142,5 +142,20 @@ describe('extractFileNames', () => {
       expect(() => extractFileNames(cwd, 'aws', functionDefinitions)).toThrowError();
       expect(consoleSpy).toBeCalled();
     });
+  });
+});
+
+describe('flatDep', () => {
+  it('should handle condition where nested deps have deps', () => {
+    const fixturePath = path.join(__dirname, './fixture.json');
+    const data = fsreal.readFileSync(fixturePath, 'utf8');
+    const fixture = JSON.parse(data);
+    const { deps, whitelist } = fixture;
+    const flatDeps = flatDep(deps, whitelist);
+    expect(flatDeps).toContain('semver');
+    expect(flatDeps).toContain('node-fetch');
+    expect(flatDeps).toContain('mysql2');
+    expect(flatDeps).toContain('io-ts');
+    expect(flatDeps).toContain('fp-ts');
   });
 });
